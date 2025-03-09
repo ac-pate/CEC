@@ -64,6 +64,8 @@ struct {
 #define Micro_Adjustment 50
 #define MAX_SPEED 255 
 #define LIFT_MOTOR_SPEED 170
+#define MICRO_SPEED 50          
+#define DEBOUNCE_TIME 300       // Debounce time to detect tap vs hold
 
 
 void setup() {
@@ -97,43 +99,132 @@ void init_pinout() {
 //             The Driver                  //
 /////////////////////////////////////////////
 
+// Variables to store the time of the last button press
+unsigned long lastPressTimeFwd = 0;
+unsigned long lastPressTimeBwd = 0;
+unsigned long lastPressTimeLft = 0;
+unsigned long lastPressTimeRgt = 0;
+
+unsigned long pressDurationFwd = 0;
+unsigned long pressDurationBwd = 0;
+unsigned long pressDurationLft = 0;
+unsigned long pressDurationRgt = 0;
+
+// // Function to handle speed based on press duration
+// void handleMovement(int fwd, int bwd, int lft, int rgt) {
+//   // Left movement logic
+//   if (lft) {
+//     pressDurationLft = millis() - lastPressTimeLft;
+//     if (pressDurationLft < DEBOUNCE_TIME) {
+//       left(MICRO_SPEED);     // Micro adjustment speed
+//     } else {
+//       left(MAX_SPEED);       // Full speed
+//     }
+//   }
+//   // Right movement logic
+//   else if (rgt) {
+//     pressDurationRgt = millis() - lastPressTimeRgt;
+//     if (pressDurationRgt < DEBOUNCE_TIME) {
+//       right(MICRO_SPEED);    // Micro adjustment speed
+//     } else {
+//       right(MAX_SPEED);      // Full speed
+//     }
+//   }
+//   // Forward movement logic
+//   else{
+//     if (fwd) {
+//       pressDurationFwd = millis() - lastPressTimeFwd;
+//       if (pressDurationFwd < DEBOUNCE_TIME) {
+//         forward(MICRO_SPEED);  // Micro adjustment speed
+//       } else {
+//         forward(MAX_SPEED);    // Full speed
+//       }
+//     }
+//     // Backward movement logic
+//     else if (bwd) {
+//       pressDurationBwd = millis() - lastPressTimeBwd;
+//       if (pressDurationBwd < DEBOUNCE_TIME) {
+//         backward(MICRO_SPEED);  // Micro adjustment speed
+//       } else {
+//         backward(MAX_SPEED);    // Full speed
+//       }
+//     }
+//     // Stop the motors when no direction is pressed
+//     else {
+//       stopMotors();  // Stop all motors
+//     }
+//   }
+// }
+
+// Handler to set the last press time for each direction
 void Handler(int fwd, int bwd, int lft, int rgt, int ctr_val) {
+  // Check if a direction button is pressed and calculate the press duration
+  if (fwd) lastPressTimeFwd = millis();
+  if (bwd) lastPressTimeBwd = millis();
+  if (lft) lastPressTimeLft = millis();
+  if (rgt) lastPressTimeRgt = millis();
+
+  // Handle movement based on the press duration for the normal directions (fwd, bwd, lft, rgt)
   if (fwd && lft) {
-      arcLeft(MAX_SPEED);
+    pressDurationFwd = millis() - lastPressTimeFwd;
+    if (pressDurationFwd < DEBOUNCE_TIME) {
+      left(MICRO_SPEED);    // Micro adjustment speed
+    } else {
+      arcLeft(MAX_SPEED);   // Arc Left turn at full speed
+    }
   } else if (fwd && rgt) {
-      arcRight(MAX_SPEED);
+    pressDurationFwd = millis() - lastPressTimeFwd;
+    if (pressDurationFwd < DEBOUNCE_TIME) {
+      right(MICRO_SPEED);   // Micro adjustment speed
+    } else {
+      arcRight(MAX_SPEED);  // Arc Right turn at full speed
+    }
   } else if (bwd && lft) {
-      arcLeftBackward(MAX_SPEED);
+    pressDurationBwd = millis() - lastPressTimeBwd;
+    if (pressDurationBwd < DEBOUNCE_TIME) {
+      left(MICRO_SPEED);    // Micro adjustment speed
+    } else {
+      arcLeftBackward(MAX_SPEED);  // Arc Left backward turn at full speed
+    }
   } else if (bwd && rgt) {
-      arcRightBackward(MAX_SPEED);
+    pressDurationBwd = millis() - lastPressTimeBwd;
+    if (pressDurationBwd < DEBOUNCE_TIME) {
+      right(MICRO_SPEED);   // Micro adjustment speed
+    } else {
+      arcRightBackward(MAX_SPEED); // Arc Right backward turn at full speed
+    }
   } else if (fwd) {
-      forward(MAX_SPEED);
+    pressDurationFwd = millis() - lastPressTimeFwd;
+    if (pressDurationFwd < DEBOUNCE_TIME) {
+      forward(MICRO_SPEED);  // Micro adjustment speed
+    } else {
+      forward(MAX_SPEED);    // Full forward speed
+    }
   } else if (bwd) {
-      backward(MAX_SPEED);
+    pressDurationBwd = millis() - lastPressTimeBwd;
+    if (pressDurationBwd < DEBOUNCE_TIME) {
+      backward(MICRO_SPEED);  // Micro adjustment speed
+    } else {
+      backward(MAX_SPEED);    // Full backward speed
+    }
   } else if (lft) {
-      left(MAX_SPEED);
+    pressDurationLft = millis() - lastPressTimeLft;
+    if (pressDurationLft < DEBOUNCE_TIME) {
+      left(MICRO_SPEED);      // Micro adjustment speed
+    } else {
+      left(MAX_SPEED);        // Full left speed
+    }
   } else if (rgt) {
-      right(MAX_SPEED);
+    pressDurationRgt = millis() - lastPressTimeRgt;
+    if (pressDurationRgt < DEBOUNCE_TIME) {
+      right(MICRO_SPEED);     // Micro adjustment speed
+    } else {
+      right(MAX_SPEED);       // Full right speed
+    }
   } else {
-      stopMotors();
-  }
-  
-
-//********** Lift Slider **********//
-  if(!ctr_val){
-    stop_lift_motor();     // Lift Motor stops
-  }else if(ctr_val > 0){
-    cw();                  // Lift Motor lifts
-
-  }else if(ctr_val < 0){
-    ccw();                 // Lift Motor puts down
-
-  }else {
-    stop_lift_motor();     // Lift Motor stops
+    stopMotors();  // Stop motors when no button is pressed
   }
 }
-
-
 /////////////////////////////////////////////
 //        Motor controller Funtions        //
 /////////////////////////////////////////////
